@@ -7,7 +7,7 @@ import { normalizeModelFormat } from "../../shared/model-format-normalizer"
 import { AGENT_MODEL_REQUIREMENTS } from "../../shared/model-requirements"
 import { normalizeFallbackModels, flattenToFallbackModelStrings } from "../../shared/model-resolver"
 import { buildFallbackChainFromModels, findMostSpecificFallbackEntry } from "../../shared/fallback-chain-from-models"
-import { getAgentDisplayName, getAgentConfigKey } from "../../shared/agent-display-names"
+import { getAgentDisplayName, getAgentConfigKey, stripAgentListSortPrefix } from "../../shared/agent-display-names"
 import { normalizeSDKResponse } from "../../shared"
 import { log } from "../../shared/logger"
 import { getAvailableModelsForDelegateTask } from "./available-models"
@@ -15,8 +15,15 @@ import type { FallbackEntry } from "../../shared/model-requirements"
 import { resolveModelForDelegateTask } from "./model-selection"
 import { fuzzyMatchModel } from "../../shared/model-availability"
 import type { CategoryConfig } from "../../config/schema"
+import { loadUserAgents, loadProjectAgents } from "../../features/claude-code-agent-loader"
 
 type AgentMode = "subagent" | "primary" | "all" | undefined
+
+type AgentInfo = {
+  name: string
+  mode?: "subagent" | "primary" | "all"
+  model?: string | { providerID: string; modelID: string }
+}
 
 function applyCategoryParams(
   base: DelegatedModelConfig,
@@ -34,6 +41,44 @@ function applyCategoryParams(
     ...(config.maxTokens !== undefined ? { maxTokens: config.maxTokens } : {}),
     ...(config.thinking !== undefined ? { thinking: config.thinking } : {}),
   }
+}
+
+function mergeWithClaudeCodeAgents(
+  serverAgents: AgentInfo[],
+  directory: string | undefined,
+): AgentInfo[] {
+  const userAgentsRecord = loadUserAgents()
+  const projectAgentsRecord = loadProjectAgents(directory)
+
+  const toAgentInfoList = (record: Record<string, { mode?: string; model?: AgentInfo["model"] }>): AgentInfo[] =>
+    Object.entries(record).map(([name, config]) => ({
+      name,
+      mode: config.mode as AgentInfo["mode"],
+      model: config.model,
+    }))
+
+  const projectAgentsList = toAgentInfoList(projectAgentsRecord)
+  const userAgentsList = toAgentInfoList(userAgentsRecord)
+
+  const mergedAgentMap = new Map<string, AgentInfo>()
+  const addIfAbsent = (agent: AgentInfo): void => {
+    const key = agent.name.toLowerCase()
+    if (!mergedAgentMap.has(key)) {
+      mergedAgentMap.set(key, agent)
+    }
+  }
+
+  for (const agent of serverAgents) {
+    addIfAbsent(agent)
+  }
+  for (const agent of projectAgentsList) {
+    addIfAbsent(agent)
+  }
+  for (const agent of userAgentsList) {
+    addIfAbsent(agent)
+  }
+
+  return Array.from(mergedAgentMap.values())
 }
 
 export async function resolveSubagentExecution(
@@ -78,26 +123,25 @@ Create the work plan directly - that's your job as the planning agent.`,
 
   try {
     const agentsResult = await client.app.agents()
-    type AgentInfo = {
-      name: string
-      mode?: "subagent" | "primary" | "all"
-      model?: string | { providerID: string; modelID: string }
-    }
     const agents = normalizeSDKResponse(agentsResult, [] as AgentInfo[], {
       preferResponseOnMissingData: true,
     })
 
-    const callableAgents = agents.filter((agent) => isTaskCallableAgentMode(agent.mode))
+    const mergedAgents = mergeWithClaudeCodeAgents(agents, executorCtx.directory)
+    const callableAgents = mergedAgents.filter((agent) => isTaskCallableAgentMode(agent.mode))
 
-    const resolvedDisplayName = getAgentDisplayName(agentToUse).replace(/^\u200B+/, "")
-    const normalizedAgentToUse = agentToUse.replace(/^\u200B+/, "")
+    const resolvedDisplayName = stripAgentListSortPrefix(getAgentDisplayName(agentToUse))
+    const normalizedAgentToUse = stripAgentListSortPrefix(agentToUse)
     const matchedAgent = callableAgents.find(
-      (agent) => agent.name.toLowerCase() === normalizedAgentToUse.toLowerCase()
-        || agent.name.toLowerCase() === resolvedDisplayName.toLowerCase()
+      (agent) => {
+        const normalizedListedAgentName = stripAgentListSortPrefix(agent.name)
+        return normalizedListedAgentName.toLowerCase() === normalizedAgentToUse.toLowerCase()
+          || normalizedListedAgentName.toLowerCase() === resolvedDisplayName.toLowerCase()
+      }
     )
     if (!matchedAgent) {
       const availableAgents = callableAgents
-        .map((a) => a.name)
+        .map((a) => stripAgentListSortPrefix(a.name))
         .sort()
         .join(", ")
       return {
@@ -107,7 +151,7 @@ Create the work plan directly - that's your job as the planning agent.`,
       }
     }
 
-    agentToUse = matchedAgent.name
+    agentToUse = stripAgentListSortPrefix(matchedAgent.name)
 
     const agentConfigKey = getAgentConfigKey(agentToUse)
     const agentOverride = agentOverrides?.[agentConfigKey as keyof typeof agentOverrides]

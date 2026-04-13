@@ -18,6 +18,7 @@ import { injectServerAuthIntoClient, log, logLegacyPluginStartupWarning } from "
 import { detectExternalSkillPlugin, getSkillPluginConflictWarning } from "./shared/external-plugin-detector"
 import { startBackgroundCheck as startTmuxCheck } from "./tools/interactive-bash"
 import { lspManager } from "./tools/lsp/client"
+import { createPluginPostHog, getPostHogDistinctId } from "./shared/posthog"
 
 let activePluginDispose: PluginDispose | null = null
 
@@ -37,6 +38,27 @@ const OhMyOpenCodePlugin: Plugin = async (ctx) => {
   await activePluginDispose?.()
 
   const pluginConfig = loadPluginConfig(ctx.directory, ctx)
+
+  const posthog = createPluginPostHog()
+  const distinctId = getPostHogDistinctId()
+  try {
+    posthog.trackActive(distinctId, "plugin_loaded")
+  } catch {
+    // telemetry failure is non-fatal, silently ignore
+  }
+  try {
+    posthog.capture({
+      distinctId,
+      event: "plugin_loaded",
+      properties: {
+        entry_point: "plugin",
+        has_openclaw: !!pluginConfig.openclaw,
+        tmux_enabled: isTmuxIntegrationEnabled(pluginConfig),
+      },
+    })
+  } catch {
+    // telemetry failure is non-fatal, silently ignore
+  }
   if (pluginConfig.openclaw) {
     await initializeOpenClaw(pluginConfig.openclaw)
   }
