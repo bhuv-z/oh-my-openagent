@@ -11,7 +11,17 @@ import {
 } from "./sisyphus/gemini";
 import { buildGpt54SisyphusPrompt } from "./sisyphus/gpt-5-4";
 import { buildTaskManagementSection } from "./sisyphus/default";
-import { buildQwenToolCallEnforcement, buildQwenDelegationReinforcement } from "./sisyphus/qwen";
+import {
+  buildQwenToolCallEnforcement,
+  buildQwenDelegationReinforcement,
+  buildQwenIntentGateEnforcement,
+  buildQwenToolGuide,
+  buildQwenToolCallExamples,
+  buildQwenVerificationOverride,
+  buildQwenDependencyAndAskGate,
+  buildQwenExecutionLoop,
+  buildQwenOutputContract,
+} from "./sisyphus/qwen";
 import { getGptApplyPatchPermission } from "./gpt-apply-patch-guard";
 
 const MODE: AgentMode = "primary";
@@ -555,17 +565,32 @@ export function createSisyphusAgent(
   };
 
    if (isQwenModel(model)) {
-     // Apply Qwen-specific injections (Phase 2b)
+     // 1. Intent gate + dependency/ask gate - after intent verbalization
+     prompt = prompt.replace(
+       "</intent_verbalization>",
+       `</intent_verbalization>\n\n${buildQwenIntentGateEnforcement()}\n\n${buildQwenDependencyAndAskGate()}`
+     );
+
+     // 2. Tool call enforcement + tool guide + examples - after tool_usage_rules
      prompt = prompt.replace(
        "</tool_usage_rules>",
-       `</tool_usage_rules>\n\n${buildQwenToolCallEnforcement()}`
+       `</tool_usage_rules>\n\n${buildQwenToolCallEnforcement()}\n\n${buildQwenToolGuide()}\n\n${buildQwenToolCallExamples()}`
      );
+
+     // 3. Execution loop + completeness contract + verification override + delegation - before Constraints
      prompt = prompt.replace(
        "<Constraints>",
-       `${buildQwenDelegationReinforcement()}\n\n<Constraints>`
+       `${buildQwenExecutionLoop()}\n\n${buildQwenDelegationReinforcement()}\n\n${buildQwenVerificationOverride()}\n\n<Constraints>`
      );
+
+     // 4. Output contract - before closing Tone_and_Style
+     prompt = prompt.replace(
+       "</Tone_and_Style>",
+       `\n\n${buildQwenOutputContract()}\n</Tone_and_Style>`
+     );
+
      // Qwen uses reasoningEffort, not Claude's thinking.budgetTokens
-     return { ...base, reasoningEffort: "medium" };
+     return { ...base, prompt, reasoningEffort: "medium" };
    }
 
    if (isGptModel(model)) {
