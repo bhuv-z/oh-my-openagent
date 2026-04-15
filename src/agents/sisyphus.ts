@@ -1,6 +1,6 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "./types";
-import { isGptModel, isGeminiModel, isGpt5_4Model } from "./types";
+import { isGptModel, isGeminiModel, isGpt5_4Model, isQwenModel } from "./types";
 import {
   buildGeminiToolMandate,
   buildGeminiDelegationOverride,
@@ -11,6 +11,17 @@ import {
 } from "./sisyphus/gemini";
 import { buildGpt54SisyphusPrompt } from "./sisyphus/gpt-5-4";
 import { buildTaskManagementSection } from "./sisyphus/default";
+import {
+  buildQwenToolCallEnforcement,
+  buildQwenDelegationReinforcement,
+  buildQwenIntentGateEnforcement,
+  buildQwenToolGuide,
+  buildQwenToolCallExamples,
+  buildQwenVerificationOverride,
+  buildQwenDependencyAndAskGate,
+  buildQwenExecutionLoop,
+  buildQwenOutputContract,
+} from "./sisyphus/qwen";
 import { getGptApplyPatchPermission } from "./gpt-apply-patch-guard";
 
 const MODE: AgentMode = "primary";
@@ -553,10 +564,39 @@ export function createSisyphusAgent(
     permission,
   };
 
-  if (isGptModel(model)) {
-    return { ...base, reasoningEffort: "medium" };
-  }
+   if (isQwenModel(model)) {
+     // 1. Intent gate + dependency/ask gate - after intent verbalization
+     prompt = prompt.replace(
+       "</intent_verbalization>",
+       `</intent_verbalization>\n\n${buildQwenIntentGateEnforcement()}\n\n${buildQwenDependencyAndAskGate()}`
+     );
 
-  return { ...base, thinking: { type: "enabled", budgetTokens: 32000 } };
+     // 2. Tool call enforcement + tool guide + examples - after tool_usage_rules
+     prompt = prompt.replace(
+       "</tool_usage_rules>",
+       `</tool_usage_rules>\n\n${buildQwenToolCallEnforcement()}\n\n${buildQwenToolGuide()}\n\n${buildQwenToolCallExamples()}`
+     );
+
+     // 3. Execution loop + completeness contract + verification override + delegation - before Constraints
+     prompt = prompt.replace(
+       "<Constraints>",
+       `${buildQwenExecutionLoop()}\n\n${buildQwenDelegationReinforcement()}\n\n${buildQwenVerificationOverride()}\n\n<Constraints>`
+     );
+
+     // 4. Output contract - before closing Tone_and_Style
+     prompt = prompt.replace(
+       "</Tone_and_Style>",
+       `\n\n${buildQwenOutputContract()}\n</Tone_and_Style>`
+     );
+
+     // Qwen uses reasoningEffort, not Claude's thinking.budgetTokens
+     return { ...base, prompt, reasoningEffort: "medium" };
+   }
+
+   if (isGptModel(model)) {
+     return { ...base, reasoningEffort: "medium" };
+   }
+
+   return { ...base, thinking: { type: "enabled", budgetTokens: 32000 } };
 }
 createSisyphusAgent.mode = MODE;
