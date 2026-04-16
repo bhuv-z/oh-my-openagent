@@ -74,13 +74,19 @@ export const HEURISTIC_MODEL_FAMILY_REGISTRY: ReadonlyArray<HeuristicModelFamily
     includes: ["llama"],
     variants: ["low", "medium", "high"],
   },
-  {
-    family: "qwen",
-    includes: ["qwen"],
-    variants: ["low", "medium", "high"],
-    reasoningEfforts: ["none", "minimal", "low", "medium", "high"],
-  },
-]
+   {
+     family: "qwen",
+     includes: ["qwen"],
+     variants: ["low", "medium", "high"],
+     reasoningEfforts: ["none", "minimal", "low", "medium", "high"],
+   },
+   {
+     family: "gemma",
+     includes: ["gemma"],
+     variants: ["low", "medium", "high"],
+     reasoningEfforts: ["none", "minimal", "low", "medium", "high"],
+   },
+ ]
 
 export function detectHeuristicModelFamily(modelID: string): HeuristicModelFamilyDefinition | undefined {
   const normalizedModelID = normalizeModelID(modelID).toLowerCase()

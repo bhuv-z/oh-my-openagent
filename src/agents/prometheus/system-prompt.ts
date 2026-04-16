@@ -7,7 +7,8 @@ import { PROMETHEUS_BEHAVIORAL_SUMMARY } from "./behavioral-summary"
 import { getGptPrometheusPrompt } from "./gpt"
 import { getGeminiPrometheusPrompt } from "./gemini"
 import { getQwenPrometheusPrompt } from "./qwen"
-import { isGptModel, isGeminiModel, isQwenModel } from "../types"
+import { getQwenPrometheusPrompt as getGemmaPrometheusPrompt } from "./gemma"
+import { isGptModel, isGeminiModel, isQwenModel, isGemmaModel, isGemma426bA4bModel } from "../types"
 
 /**
  * Combined Prometheus system prompt (Claude-optimized, default).
@@ -32,7 +33,7 @@ export const PROMETHEUS_PERMISSION = {
   question: "allow" as const,
 }
 
-export type PrometheusPromptSource = "default" | "gpt" | "gemini" | "qwen"
+export type PrometheusPromptSource = "default" | "gpt" | "gemini" | "qwen" | "gemma"
 
 /**
  * Determines which Prometheus prompt to use based on model.
@@ -46,6 +47,9 @@ export function getPrometheusPromptSource(model?: string): PrometheusPromptSourc
   }
   if (model && isQwenModel(model)) {
     return "qwen"
+  }
+  if (model && isGemmaModel(model)) {
+    return "gemma"
   }
   return "default"
 }
@@ -70,6 +74,9 @@ export function getPrometheusPrompt(model?: string, disabledTools?: readonly str
       break
     case "qwen":
       prompt = getQwenPrometheusPrompt()
+      break
+    case "gemma":
+      prompt = getGemmaPrometheusPrompt()
       break
     case "default":
     default:

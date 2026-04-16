@@ -12,7 +12,7 @@
 
 import type { AgentConfig } from "@opencode-ai/sdk"
 import type { AgentMode } from "../types"
-import { isGlmModel, isGptModel, isGeminiModel, isQwenModel } from "../types"
+import { isGlmModel, isGptModel, isGeminiModel, isQwenModel, isGemmaModel, isGemma426bA4bModel } from "../types"
 import type { AgentOverrideConfig } from "../../config/schema"
 import {
   createAgentToolRestrictions,
@@ -26,6 +26,7 @@ import { buildGpt54SisyphusJuniorPrompt } from "./gpt-5-4"
 import { buildGpt53CodexSisyphusJuniorPrompt } from "./gpt-5-3-codex"
 import { buildGeminiSisyphusJuniorPrompt } from "./gemini"
 import { buildQwenSisyphusJuniorPrompt } from "./qwen"
+import { buildQwenSisyphusJuniorPrompt as buildGemmaSisyphusJuniorPrompt } from "./gemma"
 
 const MODE: AgentMode = "subagent"
 
@@ -39,7 +40,7 @@ export const SISYPHUS_JUNIOR_DEFAULTS = {
   temperature: 0.1,
 } as const
 
-export type SisyphusJuniorPromptSource = "default" | "gpt" | "gpt-5-4" | "gpt-5-3-codex" | "gemini" | "qwen"
+export type SisyphusJuniorPromptSource = "default" | "gpt" | "gpt-5-4" | "gpt-5-3-codex" | "gemini" | "qwen" | "gemma"
 
 export function getSisyphusJuniorPromptSource(model?: string): SisyphusJuniorPromptSource {
   if (model && isGptModel(model)) {
@@ -53,6 +54,9 @@ export function getSisyphusJuniorPromptSource(model?: string): SisyphusJuniorPro
   }
   if (model && isQwenModel(model)) {
     return "qwen"
+  }
+  if (model && isGemmaModel(model)) {
+    return "gemma"
   }
   return "default"
 }
@@ -78,6 +82,8 @@ export function buildSisyphusJuniorPrompt(
       return buildGeminiSisyphusJuniorPrompt(useTaskSystem, promptAppend)
     case "qwen":
       return buildQwenSisyphusJuniorPrompt(useTaskSystem, promptAppend)
+    case "gemma":
+      return buildGemmaSisyphusJuniorPrompt(useTaskSystem, promptAppend)
     case "default":
     default:
       return buildDefaultSisyphusJuniorPrompt(useTaskSystem, promptAppend)
@@ -132,9 +138,9 @@ export function createSisyphusJuniorAgentWithOverrides(
     base.top_p = override.top_p
   }
 
-   if (isGptModel(model) || isQwenModel(model)) {
-     return { ...base, reasoningEffort: "medium" } as AgentConfig
-   }
+    if (isGptModel(model) || isQwenModel(model) || isGemmaModel(model)) {
+      return { ...base, reasoningEffort: "medium", ultrawork: false } as AgentConfig
+    }
 
    if (isGlmModel(model)) {
      return base as AgentConfig

@@ -1,5 +1,5 @@
 import type { PluginInput } from "@opencode-ai/plugin"
-import { isGptModel, isQwenModel } from "../../agents/types"
+import { isGptModel, isQwenModel, isGemmaModel } from "../../agents/types"
 import {
   getSessionAgent,
   resolveRegisteredAgentName,
@@ -51,7 +51,7 @@ export function createNoHephaestusNonGptHook(
       const modelID = input.model?.modelID
       const allowNonGptModel = options?.allowNonGptModel === true
 
-       if (agentKey === "hephaestus" && modelID && !isGptModel(modelID) && !isQwenModel(modelID)) {
+        if (agentKey === "hephaestus" && modelID && !isGptModel(modelID) && !isQwenModel(modelID) && !isGemmaModel(modelID)) {
         if (allowNonGptModel) {
           return
         }

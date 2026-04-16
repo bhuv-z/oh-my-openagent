@@ -89,6 +89,16 @@ export function isGpt5_3CodexModel(model: string): boolean {
   return modelName.includes("gpt-5.3-codex") || modelName.includes("gpt-5-3-codex");
 }
 
+export function isGemmaModel(model: string): boolean {
+  const modelName = extractModelName(model).toLowerCase();
+  return modelName.startsWith("gemma");
+}
+
+export function isGemma426bA4bModel(model: string): boolean {
+  const modelName = extractModelName(model).toLowerCase();
+  return modelName === "gemma-4-26b-a4b";
+}
+
 export function isQwenModel(model: string): boolean {
   const modelName = extractModelName(model).toLowerCase();
   return modelName.startsWith("qwen");
