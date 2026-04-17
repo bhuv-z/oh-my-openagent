@@ -32,6 +32,12 @@ const EXACT_ALIAS_RULES: ReadonlyArray<ExactAliasRule> = [
     canonicalModelID: "gemini-3-pro-preview",
     rationale: "Legacy Gemini 3 tier suffixes still need to land on the canonical preview model.",
   },
+  {
+    aliasModelID: "gemma-4-26b-a4b",
+    ruleID: "gemma-4-26b-a4b-alias",
+    canonicalModelID: "gemma-3-27b-it",
+    rationale: "Gemma 4 26b A4b maps to gemma-3-27b-it for capability compatibility.",
+  },
 ]
 
 const EXACT_ALIAS_RULES_BY_MODEL: ReadonlyMap<string, ExactAliasRule> = new Map(
@@ -50,6 +56,12 @@ const PATTERN_ALIAS_RULES: ReadonlyArray<PatternAliasRule> = [
     description: "Normalizes Gemini 3.1 Pro tier suffixes to the canonical snapshot ID.",
     match: (normalizedModelID) => /^gemini-3\.1-pro-(?:high|low)$/.test(normalizedModelID),
     canonicalize: () => "gemini-3.1-pro",
+  },
+  {
+    ruleID: "gemma-4-26b-a4b-pattern-alias",
+    description: "Normalizes gemma-4-26b-a4b to gemma-3-27b-it for capability compatibility.",
+    match: (normalizedModelID) => /^gemma-4-26b-a4b$/.test(normalizedModelID),
+    canonicalize: () => "gemma-3-27b-it",
   },
 ]
 
