@@ -1,6 +1,6 @@
 import type { AgentConfig } from "@opencode-ai/sdk"
 import type { AgentMode, AgentPromptMetadata, AgentFactory } from "./types"
-import { isGptModel, isGeminiModel, isQwenModel } from "./types"
+import { isGptModel, isGeminiModel, isQwenModel, isGemmaModel } from "./types"
 import { PROMETHEUS_PERMISSION, getPrometheusPrompt } from "./prometheus/system-prompt"
 
 export { PROMETHEUS_PERMISSION, getPrometheusPrompt } from "./prometheus/system-prompt"
@@ -94,6 +94,8 @@ export function createPrometheusAgent(model: string): AgentConfig {
   } else if (isQwenModel(model)) {
     const { PROMETHEUS_QWEN_SYSTEM_PROMPT } = require("./prometheus/qwen")
     prompt = PROMETHEUS_QWEN_SYSTEM_PROMPT
+  } else if (isGemmaModel(model)) {
+    prompt = getPrometheusPrompt(model)
   } else {
     prompt = PROMETHEUS_DEFAULT_PROMPT
   }
@@ -113,6 +115,13 @@ export function createPrometheusAgent(model: string): AgentConfig {
       ...base,
       reasoningEffort: "medium",
       textVerbosity: "high",
+    } as AgentConfig
+  }
+
+  if (isGemmaModel(model)) {
+    return {
+      ...base,
+      reasoningEffort: "medium",
     } as AgentConfig
   }
 

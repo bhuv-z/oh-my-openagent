@@ -117,14 +117,19 @@ function buildDynamicOrchestratorPrompt(ctx?: OrchestratorContext): string {
 }
 
 export function createAtlasAgent(ctx: OrchestratorContext): AgentConfig {
+  const model = ctx.model
   const baseConfig = {
     description:
       "Orchestrates work via task() to complete ALL tasks in a todo list until fully done. (Atlas - OhMyOpenCode)",
     mode: MODE,
-    ...(ctx.model ? { model: ctx.model } : {}),
+    ...(model ? { model } : {}),
     temperature: 0.1,
     prompt: buildDynamicOrchestratorPrompt(ctx),
     color: "#10B981",
+  }
+
+  if (model && (isQwenModel(model) || isGemmaModel(model))) {
+    return { ...baseConfig, reasoningEffort: "medium", ultrawork: false } as AgentConfig
   }
 
   return baseConfig as AgentConfig

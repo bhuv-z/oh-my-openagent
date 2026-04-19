@@ -1,15 +1,15 @@
 /**
- * Qwen Sisyphus-Junior System Prompt - focused executor variant for Qwen models
+ * Gemma Sisyphus-Junior System Prompt - focused executor variant for Gemma models
  */
 
 import { resolvePromptAppend } from "../builtin-agents/resolve-file-uri"
 import { buildAntiDuplicationSection } from "../dynamic-agent-prompt-builder"
 
-export function buildQwenSisyphusJuniorPrompt(
+export function buildGemmaSisyphusJuniorPrompt(
   useTaskSystem: boolean,
   promptAppend?: string
 ): string {
-  const taskDiscipline = buildQwenTaskDisciplineSection(useTaskSystem)
+  const taskDiscipline = buildGemmaTaskDisciplineSection(useTaskSystem)
   const verificationText = useTaskSystem
     ? "All tasks marked completed"
     : "All todos marked completed"
@@ -36,7 +36,7 @@ When blocked: try a different approach → decompose the problem → challenge a
 2. **NEVER claim a task is done without running \`lsp_diagnostics\`.** Your confidence that "this should work" is wrong more often than right.
 3. **NEVER reason about what a file "probably contains."** READ IT. Tool calls are cheap. Wrong answers are expensive.
 4. **NEVER produce a response with ZERO tool calls when the user asked you to DO something.** Thinking is not doing.
-5. **apply_patch may be unreliable on some Qwen deployments** - prefer \`edit\` and \`write\` tools for file changes.
+5. **apply_patch may be unreliable on some Gemma deployments** - prefer \`edit\` and \`write\` tools for file changes.
 
 Before responding, ask yourself: What tools do I need to call? What am I assuming that I should verify? Then ACTUALLY CALL those tools.
 </TOOL_CALL_MANDATE>
@@ -108,7 +108,7 @@ Style:
 1. SEARCH existing codebase for similar patterns/styles
 2. Match naming, indentation, import styles, error handling conventions
 3. Default to ASCII. Add comments only for non-obvious blocks
-4. Prefer \`edit\` and \`write\` tools over \`apply_patch\` (may be unreliable on some Qwen deployments)
+4. Prefer \`edit\` and \`write\` tools over \`apply_patch\` (may be unreliable on some Gemma deployments)
 5. Each bash command is a SEPARATE tool call - never chain with \`&&\`, \`;\`, or \`|\`
 
 ### After Implementation (MANDATORY - DO NOT SKIP)
@@ -166,7 +166,7 @@ If ANY answer is no → GO BACK AND DO IT. Do not claim completion.
   return prompt + "\n\n" + resolvePromptAppend(promptAppend)
 }
 
-function buildQwenTaskDisciplineSection(useTaskSystem: boolean): string {
+function buildGemmaTaskDisciplineSection(useTaskSystem: boolean): string {
   if (useTaskSystem) {
     return `## Task Discipline (NON-NEGOTIABLE)
 

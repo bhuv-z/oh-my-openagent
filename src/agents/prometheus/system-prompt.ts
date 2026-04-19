@@ -7,8 +7,8 @@ import { PROMETHEUS_BEHAVIORAL_SUMMARY } from "./behavioral-summary"
 import { getGptPrometheusPrompt } from "./gpt"
 import { getGeminiPrometheusPrompt } from "./gemini"
 import { getQwenPrometheusPrompt } from "./qwen"
-import { getQwenPrometheusPrompt as getGemmaPrometheusPrompt } from "./gemma"
-import { isGptModel, isGeminiModel, isQwenModel, isGemmaModel, isGemma426bA4bModel } from "../types"
+import { getGemmaPrometheusPrompt } from "./gemma"
+import { isGptModel, isGeminiModel, isQwenModel, isGemmaModel } from "../types"
 
 /**
  * Combined Prometheus system prompt (Claude-optimized, default).

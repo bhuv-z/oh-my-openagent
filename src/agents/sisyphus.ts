@@ -1,6 +1,6 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "./types";
-import { isGptModel, isGeminiModel, isGpt5_4Model, isQwenModel, isGemmaModel, isGemma426bA4bModel } from "./types";
+import { isGptModel, isGeminiModel, isGpt5_4Model, isQwenModel, isGemmaModel } from "./types";
 import {
   buildGeminiToolMandate,
   buildGeminiDelegationOverride,
@@ -604,7 +604,7 @@ export function createSisyphusAgent(
       return { ...base, prompt, reasoningEffort: "medium" };
     }
 
-    if (isGemma426bA4bModel(model)) {
+    if (isGemmaModel(model)) {
       // 1. Intent gate + dependency/ask gate - after intent verbalization
       prompt = prompt.replace(
         "</intent_verbalization>",
@@ -630,7 +630,7 @@ export function createSisyphusAgent(
       );
 
       // Gemma uses reasoningEffort, not Claude's thinking.budgetTokens
-      return { ...base, prompt, reasoningEffort: "medium" };
+      return { ...base, prompt, reasoningEffort: "medium", ultrawork: false };
     }
 
     if (isGptModel(model)) {

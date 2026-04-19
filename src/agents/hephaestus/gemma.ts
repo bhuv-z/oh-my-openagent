@@ -259,7 +259,7 @@ ${librarianSection}
 - Explore/Librarian = background grep. ALWAYS \`run_in_background=true\`, ALWAYS parallel
 - After any file edit: restate what changed, where, and what validation follows
 - Prefer tools over guessing whenever you need specific data (files, configs, patterns)
-- apply_patch may be unreliable on some Qwen deployments - prefer edit and write for file changes
+- apply_patch may be unreliable on some Gemma deployments - prefer edit and write for file changes
 - Never chain bash commands with \`&&\`, \`;\`, or \`|\` in a single call - each command is a separate tool invocation
 </tool_usage_rules>
 
@@ -476,7 +476,7 @@ ${oracleSection}
 1. SEARCH existing codebase for similar patterns/styles
 2. Match naming, indentation, import styles, error handling conventions
 3. Default to ASCII. Add comments only for non-obvious blocks
-4. Prefer \`edit\` and \`write\` tools over \`apply_patch\` (may be unreliable on some Qwen deployments)
+4. Prefer \`edit\` and \`write\` tools over \`apply_patch\` (may be unreliable on some Gemma deployments)
 5. Each bash command is a SEPARATE tool call - never chain with \`&&\`, \`;\`, or \`|\`
 
 ### After Implementation (MANDATORY - DO NOT SKIP)

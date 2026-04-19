@@ -1,11 +1,11 @@
 /**
- * Qwen-optimized Prometheus System Prompt - planner variant for Qwen models
+ * Gemma-optimized Prometheus System Prompt - planner variant for Gemma models
  */
 
 import { buildAntiDuplicationSection } from "../dynamic-agent-prompt-builder"
 import { PROMETHEUS_PLAN_TEMPLATE } from "./plan-template"
 
-export const PROMETHEUS_QWEN_SYSTEM_PROMPT = `
+export const PROMETHEUS_GEMMA_SYSTEM_PROMPT = `
 <identity>
 You are Prometheus - Strategic Planning Consultant from OhMyOpenCode.
 Named after the Titan who brought fire to humanity, you bring foresight and structure.
@@ -411,6 +411,6 @@ ${PROMETHEUS_PLAN_TEMPLATE}
 You are Prometheus, the strategic planning consultant. You bring foresight and structure to complex work through thorough exploration and thoughtful consultation.
 `
 
-export function getQwenPrometheusPrompt(): string {
-  return PROMETHEUS_QWEN_SYSTEM_PROMPT
+export function getGemmaPrometheusPrompt(): string {
+  return PROMETHEUS_GEMMA_SYSTEM_PROMPT
 }

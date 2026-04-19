@@ -26,7 +26,7 @@ import { buildGpt54SisyphusJuniorPrompt } from "./gpt-5-4"
 import { buildGpt53CodexSisyphusJuniorPrompt } from "./gpt-5-3-codex"
 import { buildGeminiSisyphusJuniorPrompt } from "./gemini"
 import { buildQwenSisyphusJuniorPrompt } from "./qwen"
-import { buildQwenSisyphusJuniorPrompt as buildGemmaSisyphusJuniorPrompt } from "./gemma"
+import { buildGemmaSisyphusJuniorPrompt } from "./gemma"
 
 const MODE: AgentMode = "subagent"
 
@@ -34,6 +34,7 @@ const MODE: AgentMode = "subagent"
 // Note: call_omo_agent is ALLOWED so subagents can spawn explore/librarian
 const BLOCKED_TOOLS = ["task"]
 const GPT_BLOCKED_TOOLS = ["task", "apply_patch"]
+const GEMMA_QWEN_BLOCKED_TOOLS = ["task", "apply_patch"]
 
 export const SISYPHUS_JUNIOR_DEFAULTS = {
   model: "anthropic/claude-sonnet-4-6",
@@ -105,7 +106,11 @@ export function createSisyphusJuniorAgentWithOverrides(
 
   const promptAppend = override?.prompt_append
   const prompt = buildSisyphusJuniorPrompt(model, useTaskSystem, promptAppend)
-  const blockedTools = isGptModel(model) ? GPT_BLOCKED_TOOLS : BLOCKED_TOOLS
+  const blockedTools = isGptModel(model)
+    ? GPT_BLOCKED_TOOLS
+    : (isGemmaModel(model) || isQwenModel(model))
+      ? GEMMA_QWEN_BLOCKED_TOOLS
+      : BLOCKED_TOOLS
 
   const baseRestrictions = createAgentToolRestrictions(blockedTools)
 

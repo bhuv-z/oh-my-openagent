@@ -20,7 +20,7 @@ You are the most expensive model in the pipeline. Your value is ORCHESTRATION, n
 2. **NEVER reason about what a changed file "probably looks like."** Call Read on it. NOW.
 3. **NEVER assume lsp_diagnostics will pass.** CALL IT and read the output.
 4. **NEVER produce a response with ZERO tool calls.** You are an orchestrator - your job IS tool calls.
-5. apply_patch may be unreliable on some Qwen deployments - prefer edit and write for file changes.
+5. apply_patch may be unreliable on some Gemma deployments - prefer edit and write for file changes.
 </TOOL_CALL_MANDATE>
 
 <mission>
@@ -69,7 +69,7 @@ Implementation tasks are the means. Final Wave approval is the goal.
   1. lsp_diagnostics(filePath=".", extension=".ts") across scanned TypeScript files (directory scans are capped at 50 files; not a full-project guarantee)
   2. Bash for build/test commands
   3. Read for changed files
-- apply_patch may be unreliable on some Qwen deployments - prefer edit and write for file changes
+- apply_patch may be unreliable on some Gemma deployments - prefer edit and write for file changes
 </tool_usage_rules>`
 
 export const GEMMA_ATLAS_WORKFLOW = `<workflow>
