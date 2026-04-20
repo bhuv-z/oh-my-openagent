@@ -7,12 +7,14 @@
  * Routing:
  * 1. GPT models (openai/*, github-copilot/gpt-*) → gpt.ts (GPT-5.4 optimized)
  * 2. Gemini models (google/*, google-vertex/*) → gemini.ts (Gemini-optimized)
- * 3. Default (Claude, etc.) → default.ts (Claude-optimized)
+ * 3. Qwen models (qwen/*) → qwen.ts (Qwen-optimized)
+ * 4. Gemma models (gemma/*) → gemma.ts (Gemma-optimized)
+ * 5. Default (Claude, etc.) → default.ts (Claude-optimized)
  */
 
 import type { AgentConfig } from "@opencode-ai/sdk"
 import type { AgentMode, AgentPromptMetadata } from "../types"
-import { isGptModel, isGeminiModel } from "../types"
+import { isGptModel, isGeminiModel, isQwenModel, isGemmaModel } from "../types"
 import type { AvailableAgent, AvailableSkill, AvailableCategory } from "../dynamic-agent-prompt-builder"
 import { buildAgentIdentitySection, buildCategorySkillsDelegationGuide } from "../dynamic-agent-prompt-builder"
 import type { CategoryConfig } from "../../config/schema"
@@ -21,6 +23,8 @@ import { mergeCategories } from "../../shared/merge-categories"
 import { getDefaultAtlasPrompt } from "./default"
 import { getGptAtlasPrompt } from "./gpt"
 import { getGeminiAtlasPrompt } from "./gemini"
+import { getQwenAtlasPrompt } from "./qwen"
+import { getGemmaAtlasPrompt } from "./gemma"
 import {
   getCategoryDescription,
   buildAgentSelectionSection,
@@ -31,7 +35,7 @@ import {
 
 const MODE: AgentMode = "primary"
 
-export type AtlasPromptSource = "default" | "gpt" | "gemini"
+export type AtlasPromptSource = "default" | "gpt" | "gemini" | "qwen" | "gemma"
 
 /**
  * Determines which Atlas prompt to use based on model.
@@ -42,6 +46,12 @@ export function getAtlasPromptSource(model?: string): AtlasPromptSource {
   }
   if (model && isGeminiModel(model)) {
     return "gemini"
+  }
+  if (model && isQwenModel(model)) {
+    return "qwen"
+  }
+  if (model && isGemmaModel(model)) {
+    return "gemma"
   }
   return "default"
 }
@@ -59,15 +69,19 @@ export interface OrchestratorContext {
 export function getAtlasPrompt(model?: string): string {
   const source = getAtlasPromptSource(model)
 
-  switch (source) {
-    case "gpt":
-      return getGptAtlasPrompt()
-    case "gemini":
-      return getGeminiAtlasPrompt()
-    case "default":
-    default:
-      return getDefaultAtlasPrompt()
-  }
+    switch (source) {
+      case "qwen":
+        return getQwenAtlasPrompt()
+      case "gpt":
+        return getGptAtlasPrompt()
+      case "gemini":
+        return getGeminiAtlasPrompt()
+      case "gemma":
+        return getGemmaAtlasPrompt()
+      case "default":
+      default:
+        return getDefaultAtlasPrompt()
+    }
 }
 
 function buildDynamicOrchestratorPrompt(ctx?: OrchestratorContext): string {
@@ -103,14 +117,19 @@ function buildDynamicOrchestratorPrompt(ctx?: OrchestratorContext): string {
 }
 
 export function createAtlasAgent(ctx: OrchestratorContext): AgentConfig {
+  const model = ctx.model
   const baseConfig = {
     description:
       "Orchestrates work via task() to complete ALL tasks in a todo list until fully done. (Atlas - OhMyOpenCode)",
     mode: MODE,
-    ...(ctx.model ? { model: ctx.model } : {}),
+    ...(model ? { model } : {}),
     temperature: 0.1,
     prompt: buildDynamicOrchestratorPrompt(ctx),
     color: "#10B981",
+  }
+
+  if (model && (isQwenModel(model) || isGemmaModel(model))) {
+    return { ...baseConfig, reasoningEffort: "medium", ultrawork: false } as AgentConfig
   }
 
   return baseConfig as AgentConfig

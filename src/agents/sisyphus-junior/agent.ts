@@ -12,7 +12,7 @@
 
 import type { AgentConfig } from "@opencode-ai/sdk"
 import type { AgentMode } from "../types"
-import { isGlmModel, isGptModel, isGeminiModel } from "../types"
+import { isGlmModel, isGptModel, isGeminiModel, isQwenModel, isGemmaModel, isGemma426bA4bModel } from "../types"
 import type { AgentOverrideConfig } from "../../config/schema"
 import {
   createAgentToolRestrictions,
@@ -25,6 +25,8 @@ import { buildGptSisyphusJuniorPrompt } from "./gpt"
 import { buildGpt54SisyphusJuniorPrompt } from "./gpt-5-4"
 import { buildGpt53CodexSisyphusJuniorPrompt } from "./gpt-5-3-codex"
 import { buildGeminiSisyphusJuniorPrompt } from "./gemini"
+import { buildQwenSisyphusJuniorPrompt } from "./qwen"
+import { buildGemmaSisyphusJuniorPrompt } from "./gemma"
 
 const MODE: AgentMode = "subagent"
 
@@ -32,13 +34,14 @@ const MODE: AgentMode = "subagent"
 // Note: call_omo_agent is ALLOWED so subagents can spawn explore/librarian
 const BLOCKED_TOOLS = ["task"]
 const GPT_BLOCKED_TOOLS = ["task", "apply_patch"]
+const GEMMA_QWEN_BLOCKED_TOOLS = ["task", "apply_patch"]
 
 export const SISYPHUS_JUNIOR_DEFAULTS = {
   model: "anthropic/claude-sonnet-4-6",
   temperature: 0.1,
 } as const
 
-export type SisyphusJuniorPromptSource = "default" | "gpt" | "gpt-5-4" | "gpt-5-3-codex" | "gemini"
+export type SisyphusJuniorPromptSource = "default" | "gpt" | "gpt-5-4" | "gpt-5-3-codex" | "gemini" | "qwen" | "gemma"
 
 export function getSisyphusJuniorPromptSource(model?: string): SisyphusJuniorPromptSource {
   if (model && isGptModel(model)) {
@@ -49,6 +52,12 @@ export function getSisyphusJuniorPromptSource(model?: string): SisyphusJuniorPro
   }
   if (model && isGeminiModel(model)) {
     return "gemini"
+  }
+  if (model && isQwenModel(model)) {
+    return "qwen"
+  }
+  if (model && isGemmaModel(model)) {
+    return "gemma"
   }
   return "default"
 }
@@ -72,6 +81,10 @@ export function buildSisyphusJuniorPrompt(
       return buildGptSisyphusJuniorPrompt(useTaskSystem, promptAppend)
     case "gemini":
       return buildGeminiSisyphusJuniorPrompt(useTaskSystem, promptAppend)
+    case "qwen":
+      return buildQwenSisyphusJuniorPrompt(useTaskSystem, promptAppend)
+    case "gemma":
+      return buildGemmaSisyphusJuniorPrompt(useTaskSystem, promptAppend)
     case "default":
     default:
       return buildDefaultSisyphusJuniorPrompt(useTaskSystem, promptAppend)
@@ -93,7 +106,11 @@ export function createSisyphusJuniorAgentWithOverrides(
 
   const promptAppend = override?.prompt_append
   const prompt = buildSisyphusJuniorPrompt(model, useTaskSystem, promptAppend)
-  const blockedTools = isGptModel(model) ? GPT_BLOCKED_TOOLS : BLOCKED_TOOLS
+  const blockedTools = isGptModel(model)
+    ? GPT_BLOCKED_TOOLS
+    : (isGemmaModel(model) || isQwenModel(model))
+      ? GEMMA_QWEN_BLOCKED_TOOLS
+      : BLOCKED_TOOLS
 
   const baseRestrictions = createAgentToolRestrictions(blockedTools)
 
@@ -126,18 +143,18 @@ export function createSisyphusJuniorAgentWithOverrides(
     base.top_p = override.top_p
   }
 
-  if (isGptModel(model)) {
-    return { ...base, reasoningEffort: "medium" } as AgentConfig
-  }
+    if (isGptModel(model) || isQwenModel(model) || isGemmaModel(model)) {
+      return { ...base, reasoningEffort: "medium", ultrawork: false } as AgentConfig
+    }
 
-  if (isGlmModel(model)) {
-    return base as AgentConfig
-  }
+   if (isGlmModel(model)) {
+     return base as AgentConfig
+   }
 
-  return {
-    ...base,
-    thinking: { type: "enabled", budgetTokens: 32000 },
-  } as AgentConfig
+   return {
+     ...base,
+     thinking: { type: "enabled", budgetTokens: 32000 },
+   } as AgentConfig
 }
 
 createSisyphusJuniorAgentWithOverrides.mode = MODE

@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/**)",
+      "Bash(git stash *)",
+      "Bash(bun test *)"
+    ],
+    "additionalDirectories": [
+      "/home/moyashi/.config/opencode"
+    ]
+  },  
+  "env": {
+        "ANTHROPIC_BASE_URL": "http://192.168.12.188:8080",
+        "ANTHROPIC_AUTH_TOKEN": "local-dummy-token",
+        "ANTHROPIC_MODEL": "qwen/qwen3.6-35b-a3b",
+        "ANTHROPIC_DEFAULT_OPUS_MODEL": "qwen/qwen3.6-35b-a3b",
+        "ANTHROPIC_DEFAULT_SONNET_MODEL": "google/gemma-4-26b-a4b",
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL": "google/gemma-4-26b-a4b",
+        "CLAUDE_CODE_SUBAGENT_MODEL": "google/gemma-4-26b-a4b"
+    },
+  "disableLoginPrompt": true
+}
